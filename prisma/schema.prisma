@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  supplier
+  purchasing
+  warehouse
+}
+
+model User{
+  id String @id @default(uuid())
+  username String
+  password String
+  alamat String?
+  role Role
+  createAt DateTime @default(now())
+
+  faktur Faktur[]
+  suratpemesanan SuratPesanan[]
+  barang Barang[]
+  pengeluaran Pengeluaran[]
+}
+
+enum Satuan {
+  unit
+  rim
+}
+
+model Barang{
+  id String @id @default(uuid())
+  id_supplier String
+  nama_barang String
+  stok Int
+  harga Int
+  satuan Satuan
+  createAt DateTime @default(now())
+
+  ppBarang PPBarang[]
+  user User @relation(fields: [id_supplier], references: [id], onDelete: Cascade)
+}
+
+enum StatusPP {
+  diterima
+  ditolak
+  prosses
+  dikonfirmasi
+  dibatalkan
+}
+
+model PP{
+  id String @id
+  status StatusPP
+  createAt DateTime @default(now())
+
+  ppBarang PPBarang[]
+  formpermintaan FormPermintaan[]
+  suratpemesanan SuratPesanan[]
+}
+
+model PPBarang{
+  id String @id @default(cuid())
+  id_pp String
+  id_barang String
+  noPembelian String
+  jumlah Int
+
+  faktur Faktur[]
+  formpermintaan FormPermintaan[]
+  suratpemesanan SuratPesanan[]
+  barang Barang @relation(fields: [id_barang], references: [id], onDelete: Cascade)
+  pp PP @relation(fields: [id_pp], references: [id], onDelete: Cascade)
+}
+
+model SuratPesanan {
+  id String @id
+  id_pp String
+  id_ppbarang String
+  id_supplier String
+  no_pesanan  String
+  createAt DateTime @default(now())
+
+  user User @relation(fields: [id_supplier], references: [id], onDelete: Cascade)
+  ppBarang PPBarang @relation(fields: [id_ppbarang], references: [id], onDelete: Cascade)
+  pp PP @relation(fields: [id_pp], references: [id], onDelete: Cascade)
+}
+
+model FormPermintaan {
+  id String @id
+  id_pp String
+  id_ppbarang String
+  no_fpp  String
+  createAt DateTime @default(now())
+
+  ppBarang PPBarang @relation(fields: [id_ppbarang], references: [id], onDelete: Cascade)
+  pp PP @relation(fields: [id_pp], references: [id], onDelete: Cascade)
+}
+
+model Faktur {
+  id String @id
+  id_supplier String
+  id_pp String
+  id_ppbarang String
+  no_faktur String
+  total_harga Int
+  total_bayar Int
+  createAt DateTime @default(now())
+
+  buktikas BuktiKas[]
+
+  user User @relation(fields: [id_supplier], references: [id], onDelete: Cascade)
+  ppbarang PPBarang @relation(fields: [id_ppbarang], references: [id], onDelete: Cascade)
+}
+
+model BuktiKas {
+  id String @id
+  id_faktur String
+  sejumlah Int
+  terbilang String
+  createAt DateTime @default(now())
+
+    faktur Faktur @relation(fields: [id_faktur], references: [id], onDelete: Cascade)
+}
+
+model Pengeluaran {
+  id String @id
+  id_faktur String
+  id_supplier String
+  sejumlah Int
+  terbilang String
+  createAt DateTime @default(now())
+
+  user User @relation(fields: [id_supplier], references: [id], onDelete: Cascade)
+}
